@@ -9,7 +9,7 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const bcrypt = require('bcryptjs');
 require("dotenv").config();
 
-const upload=multer({storage:multer.memoryStorage()})
+const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 
@@ -19,13 +19,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-res.cookie('token', value, {
-  httpOnly: true,
-  secure: true,        // required for HTTPS (both Vercel + Render use HTTPS)
-  sameSite: 'None',    // required for cross-origin cookies
-});
-
-axios.defaults.withCredentials = true;
+// ❌ REMOVED: axios.defaults.withCredentials = true  ← this was crashing your server
 
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -34,7 +28,7 @@ app.use(session({
     cookie: {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
-        secure: true,  
+        secure: true,
         sameSite: 'none'
     }
 }));
@@ -101,7 +95,7 @@ app.get("/leaderboard/monthly", async (req, res) => {
     }
 });
 
-// All time leaderboard (existing logic, just aliased clearly)
+// All time leaderboard
 app.get("/leaderboard/alltime", async (req, res) => {
     try {
         const rankings = await postmodel.aggregate([
@@ -120,16 +114,16 @@ app.get("/leaderboard/alltime", async (req, res) => {
     }
 });
 
-app.get('/auth/google', passport.authenticate('google', { 
-    scope: ['profile', 'email'] 
+app.get('/auth/google', passport.authenticate('google', {
+    scope: ['profile', 'email']
 }));
 
-app.get('/auth/google/callback', 
-    passport.authenticate('google', { failureRedirect: 'http://localhost:5173/acc' }),
+app.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: 'https://deployprithvi.vercel.app/acc' }),
     (req, res) => {
-        const redirectUrl = req.user.isNewUser 
-            ? 'http://localhost:5173/newacc' 
-            : 'http://localhost:5173/acc/home';
+        const redirectUrl = req.user.isNewUser
+            ? 'https://deployprithvi.vercel.app/newacc'
+            : 'https://deployprithvi.vercel.app/acc/home';
         res.redirect(redirectUrl);
     }
 );
@@ -159,41 +153,40 @@ app.post('/auth/logout', (req, res) => {
 
 app.post('/api/upload/avatar', upload.single('file'), async (req, res) => {
     if (!req.isAuthenticated()) {
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Not authenticated' 
+        return res.status(401).json({
+            success: false,
+            message: 'Not authenticated'
         });
     }
 
     try {
         if (!req.file) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'No file uploaded' 
+            return res.status(400).json({
+                success: false,
+                message: 'No file uploaded'
             });
         }
 
-        const result=await uploadbuffer(req.file.buffer)
+        const result = await uploadbuffer(req.file.buffer);
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             avatar: result.url,
             fileId: result.fileId
         });
     } catch (error) {
-        res.status(400).json({ 
-            success: false, 
-            message: error.message 
+        res.status(400).json({
+            success: false,
+            message: error.message
         });
     }
 });
 
-
 app.put('/api/user/complete-profile', async (req, res) => {
     if (!req.isAuthenticated()) {
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Not authenticated' 
+        return res.status(401).json({
+            success: false,
+            message: 'Not authenticated'
         });
     }
 
@@ -202,9 +195,9 @@ app.put('/api/user/complete-profile', async (req, res) => {
 
         const existingUser = await usermodel.findOne({ username });
         if (existingUser && existingUser._id.toString() !== req.user._id.toString()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Username already taken' 
+            return res.status(400).json({
+                success: false,
+                message: 'Username already taken'
             });
         }
 
@@ -212,22 +205,22 @@ app.put('/api/user/complete-profile', async (req, res) => {
 
         const user = await usermodel.findByIdAndUpdate(
             req.user._id,
-            { 
-                username, 
-                mob: mobile, 
+            {
+                username,
+                mob: mobile,
                 name,
                 avatar,
                 password: hashedPassword,
-                isNewUser: false 
+                isNewUser: false
             },
             { new: true }
         );
 
         res.json({ success: true, user });
     } catch (error) {
-        res.status(400).json({ 
-            success: false, 
-            message: error.message 
+        res.status(400).json({
+            success: false,
+            message: error.message
         });
     }
 });
@@ -235,26 +228,18 @@ app.put('/api/user/complete-profile', async (req, res) => {
 app.post("/user/create", async (req, res) => {
     try {
         const { id, name, email, username, password, mob, followers, Following, alltime_rank, monthly_rank, weekly_rank, featured, verified } = req.body;
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        
+
         const newUser = await usermodel.create({
-            id,
-            name,
-            email,
-            username,
+            id, name, email, username,
             password: hashedPassword,
-            mob,
-            followers,
-            Following,
-            alltime_rank,
-            monthly_rank,
-            weekly_rank,
-            featured,
-            verified,
+            mob, followers, Following,
+            alltime_rank, monthly_rank, weekly_rank,
+            featured, verified,
             isNewUser: false
         });
-        
+
         res.status(201).json({
             success: true,
             message: "User created successfully",
@@ -279,17 +264,17 @@ app.post("/post/create", upload.fields([{ name: "image", maxCount: 1 }, { name: 
 
         let imageUrl = null;
         let videoUrl = null;
-if (req.files?.image) {
-    const imageResult = await uploadbuffer(req.files.image[0].buffer, req.files.image[0].mimetype);
-    imageUrl = imageResult.url;
-}
 
-if (req.files?.video) {
-    const videoResult = await uploadbuffer(req.files.video[0].buffer, req.files.video[0].mimetype);
-    videoUrl = videoResult.url;
-}
+        if (req.files?.image) {
+            const imageResult = await uploadbuffer(req.files.image[0].buffer, req.files.image[0].mimetype);
+            imageUrl = imageResult.url;
+        }
 
-        // Generate unique numeric id for post
+        if (req.files?.video) {
+            const videoResult = await uploadbuffer(req.files.video[0].buffer, req.files.video[0].mimetype);
+            videoUrl = videoResult.url;
+        }
+
         const postCount = await postmodel.countDocuments();
 
         const newPost = await postmodel.create({
@@ -327,7 +312,6 @@ app.get("/post/myposts", async (req, res) => {
     }
 });
 
-
 app.get("/post/view", async (req, res) => {
     try {
         const posts = await postmodel.find()
@@ -350,11 +334,9 @@ app.put("/post/like/:postId", async (req, res) => {
         const alreadyLiked = post.likedBy.includes(userId);
 
         if (alreadyLiked) {
-            // Unlike
             post.likedBy.pull(userId);
             post.likes = Math.max(0, post.likes - 1);
         } else {
-            // Like
             post.likedBy.push(userId);
             post.likes += 1;
         }
@@ -367,23 +349,17 @@ app.put("/post/like/:postId", async (req, res) => {
     }
 });
 
+// ── /user/signup (with IP capture) ────────────────────────────────────────────
 app.post("/user/signup", upload.single('avatar'), async (req, res) => {
     try {
         const { name, email, username, password, mob } = req.body;
 
-        // Check if email already exists
         const existingEmail = await usermodel.findOne({ email });
-        if (existingEmail) {
-            return res.status(400).json({ success: false, message: "Email already registered" });
-        }
+        if (existingEmail) return res.status(400).json({ success: false, message: "Email already registered" });
 
-        // Check if username already exists
         const existingUsername = await usermodel.findOne({ username });
-        if (existingUsername) {
-            return res.status(400).json({ success: false, message: "Username already taken" });
-        }
+        if (existingUsername) return res.status(400).json({ success: false, message: "Username already taken" });
 
-        // Upload avatar if provided
         let avatarUrl = null;
         if (req.file) {
             const result = await uploadbuffer(req.file.buffer);
@@ -391,22 +367,19 @@ app.post("/user/signup", upload.single('avatar'), async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const userIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
 
         const newUser = await usermodel.create({
-            name,
-            email,
-            username,
+            name, email, username,
             password: hashedPassword,
             mob: mob || null,
             avatar: avatarUrl,
-            isNewUser: false
+            isNewUser: false,
+            lastIP: userIP
         });
 
-        // Auto login after signup
         req.login(newUser, (err) => {
-            if (err) {
-                return res.status(500).json({ success: false, message: "Login after signup failed" });
-            }
+            if (err) return res.status(500).json({ success: false, message: "Login after signup failed" });
             res.status(201).json({ success: true, message: "Account created successfully", user: newUser });
         });
 
@@ -414,39 +387,32 @@ app.post("/user/signup", upload.single('avatar'), async (req, res) => {
         res.status(400).json({ success: false, message: error.message });
     }
 });
+
+// ── /user/login (with IP capture) ─────────────────────────────────────────────
 app.post("/user/login", async (req, res) => {
     try {
         const { username, password } = req.body;
-
-        if (!username || !password) {
-            return res.status(400).json({ success: false, message: "Username and password required" });
-        }
+        if (!username || !password) return res.status(400).json({ success: false, message: "Username and password required" });
 
         const user = await usermodel.findOne({ username });
-        if (!user) {
-            return res.status(401).json({ success: false, message: "Invalid username or password" });
-        }
-
-        if (!user.password) {
-            return res.status(401).json({ success: false, message: "This account uses Google login" });
-        }
+        if (!user) return res.status(401).json({ success: false, message: "Invalid username or password" });
+        if (!user.password) return res.status(401).json({ success: false, message: "This account uses Google login" });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ success: false, message: "Invalid username or password" });
-        }
+        if (!isMatch) return res.status(401).json({ success: false, message: "Invalid username or password" });
+
+        const userIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+        await usermodel.findByIdAndUpdate(user._id, { lastIP: userIP });
 
         req.login(user, (err) => {
-            if (err) {
-                return res.status(500).json({ success: false, message: "Login failed" });
-            }
+            if (err) return res.status(500).json({ success: false, message: "Login failed" });
             res.json({ success: true, user });
         });
-
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
 // Create campaign
 app.post("/campaign/create", upload.single('image'), async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ success: false, message: "Not authenticated" });
@@ -459,8 +425,7 @@ app.post("/campaign/create", upload.single('image'), async (req, res) => {
         }
         const campaign = await campaignmodel.create({
             userId: req.user._id,
-            title,
-            description,
+            title, description,
             image: imageUrl,
             contributionTypes: JSON.parse(contributionTypes || '[]'),
             peopleNeeded: peopleNeeded || 0
@@ -484,7 +449,7 @@ app.get("/campaign/all", async (req, res) => {
     }
 });
 
-// Update campaign (progress, description etc.)
+// Update campaign
 app.put("/campaign/update/:id", upload.single('image'), async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ success: false, message: "Not authenticated" });
     try {
@@ -541,7 +506,6 @@ app.post("/campaign/join/:id", async (req, res) => {
     }
 });
 
-// Donate to campaign (update amount after Razorpay success)
 // Donate to campaign — 94% to campaign, 6% to pool
 app.put("/campaign/donate/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ success: false, message: "Not authenticated" });
@@ -559,7 +523,6 @@ app.put("/campaign/donate/:id", async (req, res) => {
 
         if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
 
-        // Record 94% as campaign donation
         await donationmodel.create({
             userId: req.user._id,
             campaignId: req.params.id,
@@ -568,7 +531,6 @@ app.put("/campaign/donate/:id", async (req, res) => {
             description: `₹${campaignAmount} donated to "${campaign.title}" by @${req.user.username}`
         });
 
-        // Record 6% as pool donation (no campaignId = goes to pool)
         await donationmodel.create({
             userId: req.user._id,
             type: "donation",
@@ -576,7 +538,6 @@ app.put("/campaign/donate/:id", async (req, res) => {
             description: `₹${poolCut} platform fee (6%) from @${req.user.username}'s donation to "${campaign.title}"`
         });
 
-        // Notify campaign creator
         await usermodel.findByIdAndUpdate(campaign.userId, {
             $push: {
                 notifications: {
@@ -616,7 +577,7 @@ app.get("/campaign/requests/:id", async (req, res) => {
 app.put("/campaign/request/:campaignId/:userId", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ success: false });
     try {
-        const { action } = req.body; // 'accepted' or 'rejected'
+        const { action } = req.body;
         const campaign = await campaignmodel.findById(req.params.campaignId);
 
         if (campaign.userId.toString() !== req.user._id.toString()) {
@@ -631,7 +592,6 @@ app.put("/campaign/request/:campaignId/:userId", async (req, res) => {
         request.status = action;
 
         if (action === 'accepted') {
-            // Add to members if not already there
             if (!campaign.members.includes(req.params.userId)) {
                 campaign.members.push(req.params.userId);
             }
@@ -639,7 +599,6 @@ app.put("/campaign/request/:campaignId/:userId", async (req, res) => {
 
         await campaign.save();
 
-        // Send notification to the user
         const notificationMsg = action === 'accepted'
             ? `✅ Your request to join "${campaign.title}" was accepted!`
             : `❌ Your request to join "${campaign.title}" was rejected.`;
@@ -684,8 +643,8 @@ app.get("/leaderboard", async (req, res) => {
         const rankings = await postmodel.aggregate([
             { $match: { userId: { $exists: true, $ne: null } } },
             { $group: { _id: "$userId", totalLikes: { $sum: "$likes" } } },
-            { $sort: { totalLikes: -1 } },  // highest likes first
-            { $limit: 10 },                  // top 10
+            { $sort: { totalLikes: -1 } },
+            { $limit: 10 },
             {
                 $lookup: {
                     from: "users",
@@ -721,7 +680,6 @@ app.post("/ai/chat", async (req, res) => {
     try {
         const { message } = req.body;
 
-        // Fetch all data from DB
         const users = await usermodel.find({}, 'name username avatar followers Following alltime_rank monthly_rank weekly_rank featured verified create_on');
         const posts = await postmodel.find({}, 'userId description likes featured posted_on').populate('userId', 'name username');
         const campaigns = await campaignmodel.find({}, 'userId title description progress status peopleNeeded amountRaised contributionTypes created_on members').populate('userId', 'name username');
@@ -735,7 +693,6 @@ app.post("/ai/chat", async (req, res) => {
             { $project: { totalLikes: 1, "user.name": 1, "user.username": 1 } }
         ]);
 
-        // Keep context small - no image/video URLs
         const dbContext = JSON.stringify({ users, posts, campaigns, leaderboard });
         console.log("DB context size:", dbContext.length, "chars");
 
@@ -764,10 +721,7 @@ Do not reveal any sensitive information like passwords or emails.`;
             });
 
             const data = await response.json();
-            console.log("Claude response:", JSON.stringify(data).slice(0, 200));
-
             if (data.error) throw new Error("Claude error: " + data.error.message);
-
             return res.json({ success: true, reply: data.content[0].text, usedApi: "claude" });
 
         } catch (claudeError) {
@@ -792,10 +746,7 @@ Do not reveal any sensitive information like passwords or emails.`;
                 });
 
                 const data = await response.json();
-                console.log("OpenAI response:", JSON.stringify(data).slice(0, 200));
-
                 if (data.error) throw new Error("OpenAI error: " + data.error.message);
-
                 return res.json({ success: true, reply: data.choices[0].message.content, usedApi: "chatgpt" });
 
             } catch (openaiError) {
@@ -816,45 +767,39 @@ Do not reveal any sensitive information like passwords or emails.`;
                     );
 
                     const data = await response.json();
-                    console.log("Gemini response:", JSON.stringify(data).slice(0, 200));
-
                     if (data.error) throw new Error("Gemini error: " + data.error.message);
-
                     return res.json({ success: true, reply: data.candidates[0].content.parts[0].text, usedApi: "gemini" });
 
                 } catch (geminiError) {
-    console.log("Gemini failed:", geminiError.message);
+                    console.log("Gemini failed:", geminiError.message);
 
-    // Try API 4 — Groq (free)
-    try {
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.GrokAPI}`
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                max_tokens: 1024,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: message }
-                ]
-            })
-        });
+                    // Try API 4 — Groq
+                    try {
+                        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${process.env.GrokAPI}`
+                            },
+                            body: JSON.stringify({
+                                model: "llama-3.3-70b-versatile",
+                                max_tokens: 1024,
+                                messages: [
+                                    { role: "system", content: systemPrompt },
+                                    { role: "user", content: message }
+                                ]
+                            })
+                        });
 
-        const data = await response.json();
-        console.log("Groq response:", JSON.stringify(data).slice(0, 200));
+                        const data = await response.json();
+                        if (data.error) throw new Error("Groq error: " + data.error.message);
+                        return res.json({ success: true, reply: data.choices[0].message.content, usedApi: "groq" });
 
-        if (data.error) throw new Error("Groq error: " + data.error.message);
-
-        return res.json({ success: true, reply: data.choices[0].message.content, usedApi: "groq" });
-
-    } catch (groqError) {
-        console.log("Groq failed:", groqError.message);
-        throw new Error("All APIs failed. Last: " + groqError.message);
-    }
-}
+                    } catch (groqError) {
+                        console.log("Groq failed:", groqError.message);
+                        throw new Error("All APIs failed. Last: " + groqError.message);
+                    }
+                }
             }
         }
 
@@ -865,128 +810,112 @@ Do not reveal any sensitive information like passwords or emails.`;
 });
 
 app.get("/donation/pool", async (req, res) => {
-  try {
-    const donations = await donationmodel.aggregate([
-      { $match: { type: "donation" } },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
-    ]);
-    const allocations = await donationmodel.aggregate([
-      { $match: { type: { $in: ["allocation", "reward"] } } },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
-    ]);
-    const totalIn = donations[0]?.total || 0;
-    const totalOut = allocations[0]?.total || 0;
-    res.json({ success: true, totalPool: totalIn - totalOut });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ── GET /donation/transactions ─────────────
-// Returns all donation/allocation transactions (public feed)
-app.get("/donation/transactions", async (req, res) => {
-  try {
-    const transactions = await donationmodel.find()
-      .sort({ createdAt: -1 })
-      .populate("userId", "name username avatar")
-      .populate("campaignId", "title")
-      .limit(50);
-    res.json({ success: true, transactions });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ── POST /donation/verify ──────────────────
-// Called after Razorpay payment success — verifies & records donation
-app.post("/donation/verify", async (req, res) => {
-  if (!req.isAuthenticated()) return res.status(401).json({ success: false });
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
-
-    // Verify signature
-    const crypto = require("crypto");
-    const expectedSig = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex");
-
-    if (expectedSig !== razorpay_signature) {
-      return res.status(400).json({ success: false, message: "Invalid payment signature" });
+    try {
+        const donations = await donationmodel.aggregate([
+            { $match: { type: "donation" } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+        const allocations = await donationmodel.aggregate([
+            { $match: { type: { $in: ["allocation", "reward"] } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+        const totalIn = donations[0]?.total || 0;
+        const totalOut = allocations[0]?.total || 0;
+        res.json({ success: true, totalPool: totalIn - totalOut });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
-
-    // Record donation transaction
-    await donationmodel.create({
-      userId: req.user._id,
-      type: "donation",
-      amount,
-      paymentId: razorpay_payment_id,
-      orderId: razorpay_order_id,
-      description: `Donation by @${req.user.username}`
-    });
-
-    res.json({ success: true, message: "Donation recorded!" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
 });
 
-// ── POST /donation/allocate ────────────────
-// ADMIN ONLY: Allocate pool money to a platform campaign
+app.get("/donation/transactions", async (req, res) => {
+    try {
+        const transactions = await donationmodel.find()
+            .sort({ createdAt: -1 })
+            .populate("userId", "name username avatar")
+            .populate("campaignId", "title")
+            .limit(50);
+        res.json({ success: true, transactions });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.post("/donation/verify", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ success: false });
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
+
+        const crypto = require("crypto");
+        const expectedSig = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest("hex");
+
+        if (expectedSig !== razorpay_signature) {
+            return res.status(400).json({ success: false, message: "Invalid payment signature" });
+        }
+
+        await donationmodel.create({
+            userId: req.user._id,
+            type: "donation",
+            amount,
+            paymentId: razorpay_payment_id,
+            orderId: razorpay_order_id,
+            description: `Donation by @${req.user.username}`
+        });
+
+        res.json({ success: true, message: "Donation recorded!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 app.post("/donation/allocate", async (req, res) => {
-  if (!req.isAuthenticated()) return res.status(401).json({ success: false });
-  // Add your admin check here, e.g.: if (!req.user.isAdmin) return res.status(403)...
-  try {
-    const { campaignId, amount } = req.body;
-    const campaign = await campaignmodel.findById(campaignId);
-    if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
+    if (!req.isAuthenticated()) return res.status(401).json({ success: false });
+    try {
+        const { campaignId, amount } = req.body;
+        const campaign = await campaignmodel.findById(campaignId);
+        if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
 
-    // Add amount to campaign
-    await campaignmodel.findByIdAndUpdate(campaignId, { $inc: { amountRaised: amount } });
+        await campaignmodel.findByIdAndUpdate(campaignId, { $inc: { amountRaised: amount } });
 
-    // Record allocation transaction
-    await donationmodel.create({
-      userId: req.user._id,
-      campaignId,
-      type: "allocation",
-      amount,
-      description: `₹${amount} allocated to campaign "${campaign.title}"`
-    });
+        await donationmodel.create({
+            userId: req.user._id,
+            campaignId,
+            type: "allocation",
+            amount,
+            description: `₹${amount} allocated to campaign "${campaign.title}"`
+        });
 
-    res.json({ success: true, message: `₹${amount} allocated to "${campaign.title}"` });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+        res.json({ success: true, message: `₹${amount} allocated to "${campaign.title}"` });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
-// ── POST /donation/reward-leaderboard ──────
-// ADMIN ONLY: Reward a top leaderboard user (funds go to their campaign)
 app.post("/donation/reward-leaderboard", async (req, res) => {
-  if (!req.isAuthenticated()) return res.status(401).json({ success: false });
-  // Add admin check here
-  try {
-    const { userId, amount } = req.body;
-    const user = await usermodel.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!req.isAuthenticated()) return res.status(401).json({ success: false });
+    try {
+        const { userId, amount } = req.body;
+        const user = await usermodel.findById(userId);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    // Record reward transaction
-    await donationmodel.create({
-      userId: req.user._id,       // admin who sent
-      recipientId: userId,         // leaderboard winner
-      type: "reward",
-      amount,
-      description: `Leaderboard reward of ₹${amount} to @${user.username}`
-    });
+        await donationmodel.create({
+            userId: req.user._id,
+            recipientId: userId,
+            type: "reward",
+            amount,
+            description: `Leaderboard reward of ₹${amount} to @${user.username}`
+        });
 
-    // Notify user
-    await usermodel.findByIdAndUpdate(userId, {
-      $push: { notifications: { message: `🏆 You received a ₹${amount} leaderboard reward!` } }
-    });
+        await usermodel.findByIdAndUpdate(userId, {
+            $push: { notifications: { message: `🏆 You received a ₹${amount} leaderboard reward!` } }
+        });
 
-    res.json({ success: true, message: `₹${amount} reward sent to @${user.username}` });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+        res.json({ success: true, message: `₹${amount} reward sent to @${user.username}` });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
 // Submit feedback for a completed campaign
@@ -1007,20 +936,15 @@ app.post("/campaign/feedback/:campaignId", async (req, res) => {
         campaign.feedbacks.push({ userId: req.user._id, rating, comment });
         await campaign.save();
 
-        // Recalculate trust score for campaign creator
         const creatorCampaigns = await campaignmodel.find({
             userId: campaign.userId,
             status: 'completed',
             'feedbacks.0': { $exists: true }
         });
 
-        let totalRating = 0;
-        let totalCount = 0;
+        let totalRating = 0, totalCount = 0;
         creatorCampaigns.forEach(c => {
-            c.feedbacks.forEach(f => {
-                totalRating += f.rating;
-                totalCount++;
-            });
+            c.feedbacks.forEach(f => { totalRating += f.rating; totalCount++; });
         });
 
         const trustScore = totalCount > 0 ? Math.round((totalRating / (totalCount * 5)) * 100) : 0;
@@ -1063,12 +987,10 @@ app.get("/admin/users", async (req, res) => {
     }
 });
 
-// Admin allocate: verifies Razorpay payment, records allocation, updates campaign fund
 app.post("/donation/admin-allocate", async (req, res) => {
     try {
         const { campaignId, amount, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
-        // Verify Razorpay signature
         const crypto = require("crypto");
         const expectedSig = crypto
             .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -1082,7 +1004,6 @@ app.post("/donation/admin-allocate", async (req, res) => {
         const campaign = await campaignmodel.findById(campaignId);
         if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
 
-        // Check pool has enough balance
         const donations = await donationmodel.aggregate([
             { $match: { type: "donation" } },
             { $group: { _id: null, total: { $sum: "$amount" } } }
@@ -1097,10 +1018,8 @@ app.post("/donation/admin-allocate", async (req, res) => {
             return res.status(400).json({ success: false, message: "Insufficient pool balance" });
         }
 
-        // Update campaign's amountRaised
         await campaignmodel.findByIdAndUpdate(campaignId, { $inc: { amountRaised: amount } });
 
-        // Record allocation transaction (this reduces the pool)
         await donationmodel.create({
             type: "allocation",
             campaignId,
@@ -1110,7 +1029,6 @@ app.post("/donation/admin-allocate", async (req, res) => {
             description: `Admin allocated ₹${amount} to campaign "${campaign.title}"`
         });
 
-        // Notify campaign creator
         await usermodel.findByIdAndUpdate(campaign.userId, {
             $push: {
                 notifications: {
@@ -1127,13 +1045,11 @@ app.post("/donation/admin-allocate", async (req, res) => {
 });
 
 // Scam Detection Route
-// Scam Detection Route — Enhanced with IP, AI title check, donation velocity
 app.get("/admin/scam-detection", async (req, res) => {
     try {
         const campaigns = await campaignmodel.find({ status: 'active' })
             .populate('userId', 'name username avatar trustScore create_on lastIP');
 
-        // Known scam title patterns
         const scamPatterns = [
             /urgent/i, /emergency/i, /dying/i, /cancer/i, /flood/i, /disaster/i,
             /help me/i, /save my/i, /only hope/i, /god bless/i, /donate now/i,
@@ -1141,7 +1057,6 @@ app.get("/admin/scam-detection", async (req, res) => {
             /medical bill/i, /hospital/i, /accident/i, /stranded/i, /homeless/i
         ];
 
-        // AI-based title similarity check using your existing AI fallback
         const checkTitleWithAI = async (title, description) => {
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -1185,7 +1100,6 @@ Answer in JSON only.`
             const creator = campaign.userId;
             if (!creator) return null;
 
-            // ── Signal 1: New account < 48 hours ──────────────────
             const accountAgeHours = creator.create_on
                 ? (Date.now() - new Date(creator.create_on).getTime()) / (1000 * 60 * 60)
                 : 999;
@@ -1194,40 +1108,34 @@ Answer in JSON only.`
                 flags.push({ signal: "New Account", detail: `Account only ${Math.round(accountAgeHours)}h old`, severity: "high" });
             }
 
-            // ── Signal 2: Zero posts ───────────────────────────────
             const postCount = await postmodel.countDocuments({ userId: creator._id });
             if (postCount === 0) {
                 riskScore += 25;
                 flags.push({ signal: "No Posts", detail: "Creator has never posted on platform", severity: "high" });
             }
 
-            // ── Signal 3: Money but no members ────────────────────
             if ((campaign.amountRaised || 0) > 500 && (campaign.members?.length || 0) === 0) {
                 riskScore += 20;
                 flags.push({ signal: "Money No Members", detail: `₹${campaign.amountRaised} raised but 0 members joined`, severity: "medium" });
             }
 
-            // ── Signal 4: Stale + funded ──────────────────────────
             const campaignAgeDays = (Date.now() - new Date(campaign.created_on).getTime()) / (1000 * 60 * 60 * 24);
             if (campaignAgeDays > 30 && (campaign.progress || 0) === 0 && (campaign.amountRaised || 0) > 0) {
                 riskScore += 25;
                 flags.push({ signal: "Stale + Funded", detail: `${Math.round(campaignAgeDays)} days active, 0% progress, ₹${campaign.amountRaised} collected`, severity: "high" });
             }
 
-            // ── Signal 5: Low trust score ─────────────────────────
             if ((creator.trustScore || 0) > 0 && creator.trustScore < 30) {
                 riskScore += 20;
                 flags.push({ signal: "Low Trust Score", detail: `Creator trust score: ${creator.trustScore}%`, severity: "medium" });
             }
 
-            // ── Signal 6: Thin description ────────────────────────
             const wordCount = (campaign.description || "").trim().split(/\s+/).filter(w => w).length;
             if (wordCount < 15 && (campaign.amountRaised || 0) > 200) {
                 riskScore += 15;
                 flags.push({ signal: "Thin Description", detail: `Only ${wordCount} words in description`, severity: "low" });
             }
 
-            // ── Signal 7: Poor past feedback ──────────────────────
             const pastCampaigns = await campaignmodel.find({
                 userId: creator._id,
                 status: 'completed',
@@ -1243,7 +1151,6 @@ Answer in JSON only.`
                 }
             }
 
-            // ── Signal 8: Same IP — multiple campaigns ────────────
             if (creator.lastIP) {
                 const sameIPUsers = await usermodel.find({ lastIP: creator.lastIP, _id: { $ne: creator._id } });
                 if (sameIPUsers.length > 0) {
@@ -1262,7 +1169,6 @@ Answer in JSON only.`
                 }
             }
 
-            // ── Signal 9: Keyword pattern match in title/desc ─────
             const textToCheck = `${campaign.title} ${campaign.description}`;
             const matchedPatterns = scamPatterns.filter(p => p.test(textToCheck));
             if (matchedPatterns.length >= 2) {
@@ -1274,7 +1180,6 @@ Answer in JSON only.`
                 });
             }
 
-            // ── Signal 10: AI title similarity check ──────────────
             const aiResult = await checkTitleWithAI(campaign.title, campaign.description);
             if (aiResult.isScam && aiResult.confidence > 70) {
                 riskScore += 25;
@@ -1292,7 +1197,6 @@ Answer in JSON only.`
                 });
             }
 
-            // ── Signal 11: Donation velocity — huge amount in 24h ─
             const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
             const recentDonations = await donationmodel.aggregate([
                 {
@@ -1354,75 +1258,26 @@ Answer in JSON only.`
     }
 });
 
-// Login — captures IP for scam detection
-app.post("/user/login", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        if (!username || !password) return res.status(400).json({ success: false, message: "Username and password required" });
-
-        const user = await usermodel.findOne({ username });
-        if (!user) return res.status(401).json({ success: false, message: "Invalid username or password" });
-        if (!user.password) return res.status(401).json({ success: false, message: "This account uses Google login" });
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(401).json({ success: false, message: "Invalid username or password" });
-
-        // Capture IP
-        const userIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
-        await usermodel.findByIdAndUpdate(user._id, { lastIP: userIP });
-
-        req.login(user, (err) => {
-            if (err) return res.status(500).json({ success: false, message: "Login failed" });
-            res.json({ success: true, user });
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Signup — captures IP too
-app.post("/user/signup", upload.single('avatar'), async (req, res) => {
-    try {
-        const { name, email, username, password, mob } = req.body;
-
-        const existingEmail = await usermodel.findOne({ email });
-        if (existingEmail) return res.status(400).json({ success: false, message: "Email already registered" });
-
-        const existingUsername = await usermodel.findOne({ username });
-        if (existingUsername) return res.status(400).json({ success: false, message: "Username already taken" });
-
-        let avatarUrl = null;
-        if (req.file) {
-            const result = await uploadbuffer(req.file.buffer);
-            avatarUrl = result.url;
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const userIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
-
-        const newUser = await usermodel.create({
-            name, email, username,
-            password: hashedPassword,
-            mob: mob || null,
-            avatar: avatarUrl,
-            isNewUser: false,
-            lastIP: userIP  // capture IP at signup
-        });
-
-        req.login(newUser, (err) => {
-            if (err) return res.status(500).json({ success: false, message: "Login after signup failed" });
-            res.status(201).json({ success: true, message: "Account created successfully", user: newUser });
-        });
-    } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
-    }
-});
-
-// Admin flag/unflag a campaign
+// Admin flag/unflag a campaign (with notification)
 app.put("/admin/campaign/flag/:id", async (req, res) => {
     try {
         const { flagged, reason } = req.body;
-        await campaignmodel.findByIdAndUpdate(req.params.id, { flagged, flagReason: reason || "" });
+        const campaign = await campaignmodel.findByIdAndUpdate(
+            req.params.id,
+            { flagged, flagReason: reason || "" },
+            { new: true }
+        );
+
+        if (flagged && campaign) {
+            await usermodel.findByIdAndUpdate(campaign.userId, {
+                $push: {
+                    notifications: {
+                        message: `⚠️ Admin has flagged your campaign "${campaign.title}" for review. Reason: ${reason || "Policy violation suspected"}. Please ensure your campaign follows platform guidelines.`
+                    }
+                }
+            });
+        }
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -1444,34 +1299,7 @@ app.delete("/admin/campaign/remove/:id", async (req, res) => {
     }
 });
 
-app.put("/admin/campaign/flag/:id", async (req, res) => {
-    try {
-        const { flagged, reason } = req.body;
-        const campaign = await campaignmodel.findByIdAndUpdate(
-            req.params.id,
-            { flagged, flagReason: reason || "" },
-            { new: true }
-        );
-
-        // Notify campaign creator when flagged
-        if (flagged && campaign) {
-            await usermodel.findByIdAndUpdate(campaign.userId, {
-                $push: {
-                    notifications: {
-                        message: `⚠️ Admin has flagged your campaign "${campaign.title}" for review. Reason: ${reason || "Policy violation suspected"}. Please ensure your campaign follows platform guidelines.`
-                    }
-                }
-            });
-        }
-
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
 const paymentRoutes = require("./routes/payment");
-
 app.use("/payment", paymentRoutes);
 
 module.exports = app;
