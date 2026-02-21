@@ -46,7 +46,7 @@ export default function Campaign() {
 
     const fetchCurrentUser = async () => {
         try {
-            const res = await fetch('http://localhost:3000/auth/user', { credentials: 'include' });
+            const res = await fetch('https://deployprithvi.onrender.com/auth/user', { credentials: 'include' });
             const data = await res.json();
             if (data.success) setCurrentUser(data.user);
         } catch (err) { console.error(err); }
@@ -54,7 +54,7 @@ export default function Campaign() {
 
     const fetchCampaigns = async () => {
         try {
-            const res = await fetch('http://localhost:3000/campaign/all', { credentials: 'include' });
+            const res = await fetch('https://deployprithvi.onrender.com/campaign/all', { credentials: 'include' });
             const data = await res.json();
             if (data.success) setCampaigns(data.campaigns);
         } catch (err) { console.error(err); }
@@ -63,7 +63,7 @@ export default function Campaign() {
 
     const fetchNotifications = async () => {
         try {
-            const res = await fetch('http://localhost:3000/user/notifications', { credentials: 'include' });
+            const res = await fetch('https://deployprithvi.onrender.com/user/notifications', { credentials: 'include' });
             const data = await res.json();
             if (data.success) setNotifications(data.notifications);
         } catch (err) { console.error(err); }
@@ -72,7 +72,7 @@ export default function Campaign() {
     const openNotifications = async () => {
         await fetchNotifications();
         setShowNotifications(true);
-        await fetch('http://localhost:3000/user/notifications/read', {
+        await fetch('https://deployprithvi.onrender.com/user/notifications/read', {
             method: 'PUT',
             credentials: 'include'
         });
@@ -82,7 +82,7 @@ export default function Campaign() {
         setRequestsModal(campaign);
         setRequestsLoading(true);
         try {
-            const res = await fetch(`http://localhost:3000/campaign/requests/${campaign._id}`, { credentials: 'include' });
+            const res = await fetch(`https://deployprithvi.onrender.com/campaign/requests/${campaign._id}`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setRequests(data.requests);
         } catch (err) { console.error(err); }
@@ -91,7 +91,7 @@ export default function Campaign() {
 
     const handleRequestAction = async (campaignId, userId, action) => {
         try {
-            const res = await fetch(`http://localhost:3000/campaign/request/${campaignId}/${userId}`, {
+            const res = await fetch(`https://deployprithvi.onrender.com/campaign/request/${campaignId}/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -159,8 +159,8 @@ export default function Campaign() {
             if (imageFile) formData.append('image', imageFile);
 
             const url = editingCampaign
-                ? `http://localhost:3000/campaign/update/${editingCampaign._id}`
-                : 'http://localhost:3000/campaign/create';
+                ? `https://deployprithvi.onrender.com/campaign/update/${editingCampaign._id}`
+                : 'https://deployprithvi.onrender.com/campaign/create';
             const method = editingCampaign ? 'PUT' : 'POST';
 
             const res = await fetch(url, { method, credentials: 'include', body: formData });
@@ -180,7 +180,7 @@ export default function Campaign() {
 
     const handleJoin = async (campaignId) => {
         try {
-            const res = await fetch(`http://localhost:3000/campaign/join/${campaignId}`, {
+            const res = await fetch(`https://deployprithvi.onrender.com/campaign/join/${campaignId}`, {
                 method: 'POST',
                 credentials: 'include'
             });
@@ -200,7 +200,7 @@ export default function Campaign() {
     const campaignAmount = amount - poolCut;
 
     try {
-        const res = await fetch("http://localhost:3000/payment/create-order", {
+        const res = await fetch("https://deployprithvi.onrender.com/payment/create-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ amount }),
@@ -216,7 +216,7 @@ export default function Campaign() {
             description: `₹${campaignAmount} to campaign • ₹${poolCut} to platform pool`,
             order_id: order.id,
             handler: async function () {
-                const result = await fetch(`http://localhost:3000/campaign/donate/${campaignId}`, {
+                const result = await fetch(`https://deployprithvi.onrender.com/campaign/donate/${campaignId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',

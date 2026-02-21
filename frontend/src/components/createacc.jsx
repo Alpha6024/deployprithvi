@@ -57,7 +57,7 @@ export default function CreateAcc() {
             if (form.mob) formData.append('mob', form.mob);
             if (avatar) formData.append('avatar', avatar);
 
-            const res = await fetch('http://localhost:3000/user/signup', {
+            const res = await fetch('https://deployprithvi.onrender.com/user/signup', {
                 method: 'POST',
                 credentials: 'include',
                 body: formData

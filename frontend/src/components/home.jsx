@@ -16,7 +16,7 @@ export default function home() {
 
 const fetchCurrentUser = async () => {
     try {
-        const res = await fetch('http://localhost:3000/auth/user', { credentials: 'include' });
+        const res = await fetch('https://deployprithvi.onrender.com/auth/user', { credentials: 'include' });
         const data = await res.json();
         if (data.success) setCurrentUserId(data.user._id);
     } catch (err) {
@@ -26,7 +26,7 @@ const fetchCurrentUser = async () => {
 
 const fetchPosts = async () => {
     try {
-        const res = await fetch('http://localhost:3000/post/view', { credentials: 'include' });
+        const res = await fetch('https://deployprithvi.onrender.com/post/view', { credentials: 'include' });
         const data = await res.json();
         if (data.success) {
             const shuffled = data.posts.sort(() => Math.random() - 0.5);
@@ -64,7 +64,7 @@ const handleLike = async (postId) => {
     ));
 
     try {
-        const res = await fetch(`http://localhost:3000/post/like/${postId}`, {
+        const res = await fetch(`https://deployprithvi.onrender.com/post/like/${postId}`, {
             method: 'PUT',
             credentials: 'include'
         });

@@ -21,7 +21,7 @@ export default function feedback() {
 
     const fetchCampaign = async () => {
         try {
-            const res = await fetch('http://localhost:3000/campaign/all', { credentials: 'include' });
+            const res = await fetch('https://deployprithvi.onrender.com/campaign/all', { credentials: 'include' });
             const data = await res.json();
             if (data.success) {
                 const found = data.campaigns.find(c => c._id === campaignId);
@@ -32,7 +32,7 @@ export default function feedback() {
 
     const fetchFeedbacks = async () => {
         try {
-            const res = await fetch(`http://localhost:3000/campaign/feedback/${campaignId}`, { credentials: 'include' });
+            const res = await fetch(`https://deployprithvi.onrender.com/campaign/feedback/${campaignId}`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setExistingFeedbacks(data.feedbacks);
         } catch (err) { console.error(err); }
@@ -43,7 +43,7 @@ export default function feedback() {
         if (!comment.trim()) return setMsg('Please write a comment');
         setSubmitting(true);
         try {
-            const res = await fetch(`http://localhost:3000/campaign/feedback/${campaignId}`, {
+            const res = await fetch(`https://deployprithvi.onrender.com/campaign/feedback/${campaignId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

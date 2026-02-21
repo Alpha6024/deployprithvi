@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-const API = "http://localhost:3000";
+const API = "https://deployprithvi.onrender.com";
 const RAZORPAY_KEY = "rzp_test_SGtmofw4CWXzzG";
 
 export default function Fund() {

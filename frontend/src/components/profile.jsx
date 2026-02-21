@@ -16,7 +16,7 @@ export default function Profile() {
 
     useEffect(() => {
         if (userData?._id) {
-            fetch(`http://localhost:3000/user/trustscore/${userData._id}`)
+            fetch(`https://deployprithvi.onrender.com/user/trustscore/${userData._id}`)
                 .then(r => r.json())
                 .then(d => { if (d.success) setTrustScore(d.trustScore); })
                 .catch(err => console.error(err));
@@ -25,7 +25,7 @@ export default function Profile() {
 
     const fetchUserData = async () => {
         try {
-            const response = await fetch('http://localhost:3000/auth/user', { credentials: 'include' });
+            const response = await fetch('https://deployprithvi.onrender.com/auth/user', { credentials: 'include' });
             const data = await response.json();
             if (data.success) {
                 setUserData(data.user);
@@ -40,7 +40,7 @@ export default function Profile() {
 
     const handleLogout = async () => {
         try {
-            await fetch('http://localhost:3000/auth/logout', { method: 'POST', credentials: 'include' });
+            await fetch('https://deployprithvi.onrender.com/auth/logout', { method: 'POST', credentials: 'include' });
             navigate('/acc');
         } catch (error) {
             console.error('Logout failed:', error);
@@ -49,7 +49,7 @@ export default function Profile() {
 
     const fetchUserPosts = async () => {
         try {
-            const response = await fetch('http://localhost:3000/post/myposts', { credentials: 'include' });
+            const response = await fetch('https://deployprithvi.onrender.com/post/myposts', { credentials: 'include' });
             const data = await response.json();
             if (data.success) setUserPosts(data.posts);
             setLoading(false);

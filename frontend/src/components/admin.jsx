@@ -4,7 +4,7 @@ import { Users, Target, LogOut, DollarSign, Send, Eye, Lock, Shield, AlertTriang
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "prithvi@2026";
 const RAZORPAY_KEY = "rzp_test_SGtmofw4CWXzzG";
-const API = "http://localhost:3000";
+const API = "https://deployprithvi.onrender.com";
 
 export default function Admin() {
     const [loggedIn, setLoggedIn] = useState(false);

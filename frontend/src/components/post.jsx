@@ -58,7 +58,7 @@ export default function CreatePost() {
             if (videoFile) formData.append('video', videoFile);
             if (description) formData.append('description', description);
 
-            const res = await fetch('http://localhost:3000/post/create', {
+            const res = await fetch('https://deployprithvi.onrender.com/post/create', {
                 method: 'POST',
                 credentials: 'include',
                 body: formData

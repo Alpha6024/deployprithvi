@@ -15,7 +15,7 @@ export default function Acc() {
         setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:3000/user/login', {
+            const res = await fetch('https://deployprithvi.onrender.com/user/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -37,7 +37,7 @@ export default function Acc() {
     };
 
     const handleGoogleSignup = () => {
-        window.location.href = 'http://localhost:3000/auth/google';
+        window.location.href = 'https://deployprithvi.onrender.com/auth/google';
     };
 
     return (

@@ -19,7 +19,7 @@ export default function Leaderboard() {
 
     const fetchCurrentUser = async () => {
         try {
-            const res = await fetch('http://localhost:3000/auth/user', { credentials: 'include' });
+            const res = await fetch('https://deployprithvi.onrender.com/auth/user', { credentials: 'include' });
             const data = await res.json();
             if (data.success) setCurrentUser(data.user);
         } catch (err) { console.error(err); }
@@ -29,8 +29,8 @@ export default function Leaderboard() {
         setLoading(true);
         try {
             const url = tab === 'monthly'
-                ? 'http://localhost:3000/leaderboard/monthly'
-                : 'http://localhost:3000/leaderboard/alltime';
+                ? 'https://deployprithvi.onrender.com/leaderboard/monthly'
+                : 'https://deployprithvi.onrender.com/leaderboard/alltime';
             const res = await fetch(url, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setRankings(data.rankings);
