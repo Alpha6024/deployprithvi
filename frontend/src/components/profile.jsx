@@ -16,7 +16,7 @@ export default function Profile() {
 
     useEffect(() => {
         if (userData?._id) {
-            fetch(`https://deployprithvi.onrender.com/user/trustscore/${userData._id}`)
+            fetch(`https://deployprithvi.onrender.com/user/trustscore/${userData._id}`, { credentials: 'include' })
                 .then(r => r.json())
                 .then(d => { if (d.success) setTrustScore(d.trustScore); })
                 .catch(err => console.error(err));

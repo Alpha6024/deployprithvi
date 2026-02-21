@@ -62,7 +62,7 @@ export default function Admin() {
             const [usersRes, campaignsRes, poolRes, txRes] = await Promise.all([
                 fetch(`${API}/admin/users`, { credentials: "include" }),
                 fetch(`${API}/campaign/all`, { credentials: "include" }),
-                fetch(`${API}/donation/pool`),
+                fetch(`${API}/donation/pool`, { credentials: "include" }),
                 fetch(`${API}/donation/transactions`, { credentials: "include" }),
             ]);
             const usersData = await usersRes.json();
@@ -143,6 +143,7 @@ export default function Admin() {
             const orderRes = await fetch(`${API}/payment/create-order`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({ amount }),
             });
             const order = await orderRes.json();

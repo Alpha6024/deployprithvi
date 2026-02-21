@@ -64,7 +64,7 @@ useEffect(() => {
 
   async function fetchPool() {
     try {
-      const res = await fetch(`${API}/donation/pool`);
+      const res = await fetch(`${API}/donation/pool`, { credentials: 'include' });
       const data = await res.json();
       if (data.success) setTotalPool(data.totalPool);
     } catch (err) { console.error(err); }
