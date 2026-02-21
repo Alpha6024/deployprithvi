@@ -15,9 +15,17 @@ const app = express();
 
 app.use(cors({
     origin: 'https://deployprithvi.vercel.app',
-    credentials: true
+    credentials: true,
 }));
 app.use(express.json());
+
+res.cookie('token', value, {
+  httpOnly: true,
+  secure: true,        // required for HTTPS (both Vercel + Render use HTTPS)
+  sameSite: 'None',    // required for cross-origin cookies
+});
+
+axios.defaults.withCredentials = true;
 
 app.use(session({
     secret: process.env.SESSION_SECRET,
