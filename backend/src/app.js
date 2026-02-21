@@ -14,7 +14,7 @@ const upload=multer({storage:multer.memoryStorage()})
 const app = express();
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://deployprithvi.vercel.app',
     credentials: true
 }));
 app.use(express.json());
