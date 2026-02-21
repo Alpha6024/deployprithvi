@@ -21,10 +21,15 @@ app.use(express.json());
 
 // ❌ REMOVED: axios.defaults.withCredentials = true  ← this was crashing your server
 
+const MongoStore = require('connect-mongo');
+
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI,  // your MongoDB connection string env var name
+    }),
     cookie: {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
